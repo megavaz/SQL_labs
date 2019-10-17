@@ -1,3 +1,6 @@
+/* Дмитрий Нечаев
+   Вариант 5, Лабораторная 1
+*/
 create table book_catalog
 (
     edition_code     varchar(10),
