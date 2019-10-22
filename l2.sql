@@ -6,13 +6,12 @@ where publishment_year between extract(year from sysdate()) - 3 and extract(year
 order by publishment_year desc;
 
 # Создать упорядоченный список авторов с указанием
-# количества произведений, написанных этим автором;
-select surname, name, patronymic, COUNT(title) cnt
+# количества произведений, написанных этим автором
+# это первый способ
+select surname, name, patronymic, COUNT(*) cnt
 from authors,
-     book_authors,
-     books
-where books.id = book_authors.book
-  and book_authors.author = authors.id
+     book_authors
+where book_authors.author = authors.id
 group by surname, name, patronymic
 order by cnt desc;
 
@@ -30,19 +29,18 @@ order by cnt desc;
 
 # Создать упорядоченный список произведений, у которых нет авторов;
 select title
-from book_authors,
-     books
-where books.id = book_authors.book
-  and book_authors.author is null
-order by title;
+from books
+WHERE books.id
+          NOT IN (select book
+                  from book_authors);
 
 
 # Создать упорядоченный список произведений, которые есть в двух и более книгах;
-select title
+select books.id, title
 from books,
      content
 where books.id = content.book
-group by title
+group by books.id, title
 having count(product) >= 2
 order by title;
 
