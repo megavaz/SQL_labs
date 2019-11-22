@@ -50,19 +50,35 @@ select *
 from products2;
 
 # Операция разность. В mysql отсутствует MINUS,
-# так что разность я реализую при помощи not in при условии уникальности id и соответсвующих данных
+# так что разность я реализую при помощи not in при условии уникальности id и соответствующих данных
 
 select *
 from products
-where id not in (select id from products2);
+where not exists(select *
+                 from products2
+                 where products.id = products2.id
+                   and products.title = products2.title
+                   and products.type = products2.type);
 
 # Операция пересечение. Делаю так же при помощи not in
 
 select *
 from products
-where id not in (select id
-                 from products
-                 where id not in (select id from products2));
+where not exists(select *
+                 from products2
+                 where not exists(select *
+                                  from products2
+                                  where products.id = products2.id
+                                    and products.title = products2.title
+                                    and products.type = products2.type));
+
+select *
+from products
+where not exists(select *
+                 from products2
+                 where products.id = products2.id
+                   and products.title = products2.title
+                   and products.type = products2.type);
 
 # Операция соединение
 
