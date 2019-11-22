@@ -10,8 +10,8 @@ order by publishment_year desc;
 # это первый способ
 select surname, name, patronymic, COUNT(*) cnt
 from authors,
-     book_authors
-where book_authors.author = authors.id
+     product_authors
+where product_authors.author = authors.id
 group by surname, name, patronymic
 order by cnt desc;
 
@@ -19,29 +19,29 @@ order by cnt desc;
 # количества произведений, написанных этим автором;
 # это второй способ
 SELECT surname, name, patronymic, COUNT(title) cnt
-FROM product
-         join book_authors
-              on product.id = book_authors.book
+FROM products
+         join product_authors
+              on products.id = product_authors.product
          join authors
-              on book_authors.author = authors.id
+              on product_authors.author = authors.id
 group by surname, name, patronymic
 order by cnt desc;
 
 # Создать упорядоченный список произведений, у которых нет авторов;
 select title
-from product
-WHERE product.id
-          NOT IN (select book
-                  from book_authors);
+from products
+WHERE products.id
+          NOT IN (select product
+                  from product_authors);
 
 
 # Создать упорядоченный список произведений, которые есть в двух и более книгах;
-select product.id, title
-from product,
+select products.id, title
+from products,
      content
-where product.id = content.book
-group by product.id, title
-having count(product) >= 2
+where products.id = content.product
+group by products.id, title
+having count(book) >= 2
 order by title;
 
 
@@ -49,13 +49,13 @@ order by title;
 select title
 from book_catalog,
      content,
-     product,
-     book_authors,
+     products,
+     product_authors,
      authors
-where book_catalog.edition_code = content.product
-  and content.book = product.id
-  and product.id = book_authors.book
-  and book_authors.author = authors.id
+where book_catalog.edition_code = content.book
+  and content.product = products.id
+  and products.id = product_authors.product
+  and product_authors.author = authors.id
   and authors.surname = 'Чехов'
   and authors.name = 'Антон'
   and authors.patronymic = 'Павлович'

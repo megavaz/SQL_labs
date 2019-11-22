@@ -3,17 +3,17 @@
 # а состоит лишь из одного романа
 
 create view novels as
-select book_catalog.*, product.type
+select book_catalog.*, products.type
 from book_catalog,
      content,
-     product
-where book_catalog.edition_code = content.product
-  and content.book = product.id
-  and product.type = 'Роман'
+     products
+where book_catalog.edition_code = content.book
+  and content.product = products.id
+  and products.type = 'Роман'
   and book_catalog.edition_code in
-      (select content.product
+      (select content.book
        from content
-       group by content.product
+       group by content.book
        having count(*) = 1)
 group by edition_code;
 
@@ -21,13 +21,13 @@ group by edition_code;
 # по-сути это список книг (элементов book_catalog), которые содержат в себе хотя бы один роман
 
 create view novels2 as
-select book_catalog.*, product.type
+select book_catalog.*, products.type
 from book_catalog,
      content,
-     product
-where book_catalog.edition_code = content.product
-  and content.book = product.id
-  and product.type = 'Роман';
+     products
+where book_catalog.edition_code = content.book
+  and content.product = products.id
+  and products.type = 'Роман';
 
 # тут вроде всё понятно, просто набор авторов, количество их книг и количество их публикаций
 
@@ -35,17 +35,17 @@ create view authors_activity as
 select authors.surname,
        authors.name,
        authors.patronymic,
-       COUNT(distinct product.id)                  number_of_products,
+       COUNT(distinct products.id)                  number_of_products,
        COUNT(distinct book_catalog.edition_code) number_of_publishments
 from book_catalog,
      content,
-     product,
-     book_authors,
+     products,
+     product_authors,
      authors
-where book_catalog.edition_code = content.product
-  and content.book = product.id
-  and product.id = book_authors.book
-  and book_authors.author = authors.id
+where book_catalog.edition_code = content.book
+  and content.product = products.id
+  and products.id = product_authors.product
+  and product_authors.author = authors.id
 group by authors.surname,
          authors.name,
          authors.patronymic;
@@ -55,16 +55,16 @@ group by authors.surname,
 create view authors_without_coauthors as
 select distinct authors.*
 from authors,
-     book_authors
-where authors.id = book_authors.author
+     product_authors
+where authors.id = product_authors.author
   and authors.id not in
-      (select book_authors.author
-       from book_authors
-       where book_authors.book in
-             (select book_authors.book
-              from book_authors
-              group by book_authors.book
-              having count(book_authors.author) > 1
+      (select product_authors.author
+       from product_authors
+       where product_authors.product in
+             (select product_authors.product
+              from product_authors
+              group by product_authors.product
+              having count(product_authors.author) > 1
              ));
 
 

@@ -29,11 +29,11 @@ create table product
     type  varchar(20) not null
 );
 
-create table book_authors
+create table product_authors
 (
     id     mediumint not null auto_increment,
     PRIMARY KEY (id),
-    book   mediumint not null references product (id),
+    book   mediumint not null references products (id),
     author mediumint not null references authors (id)
 );
 
@@ -41,8 +41,8 @@ create table content
 (
     id      mediumint   not null auto_increment,
     PRIMARY KEY (id),
-    book    mediumint   not null references product (id),
-    product varchar(10) not null references book_catalog (edition_code)
+    product    mediumint   not null references products (id),
+    book varchar(10) not null references book_catalog (edition_code)
 );
 
 insert into book_catalog (edition_code, name, publisher, publishment_year, pages)
@@ -56,19 +56,19 @@ values ('Толстой', 'Лев', 'Николаевич'),
        ('Достоевский', 'Федор', 'Михайлович'),
        ('Пушкин', 'Александр', 'Сергеевич');
 
-insert into product (title, type)
+insert into products (title, type)
 values ('Война и мир', 'Роман'),
        ('Преступление и наказание', 'Роман'),
        ('Идиот', 'Роман'),
        ('Рассказы для детей', 'Сборник рассказов');
 
-insert into book_authors (book, author)
+insert into product_authors (product, author)
 values (1, 1),
        (2, 2),
        (3, 2),
        (4, 3);
 
-insert into content (book, product)
+insert into content (product, book)
 values ('1', 'edition001'),
        ('2', 'edition002'),
        ('3', 'edition003'),
