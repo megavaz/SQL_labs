@@ -64,21 +64,11 @@ where not exists(select *
 
 select *
 from products
-where not exists(select *
-                 from products2
-                 where not exists(select *
-                                  from products2
-                                  where products.id = products2.id
-                                    and products.title = products2.title
-                                    and products.type = products2.type));
-
-select *
-from products
-where not exists(select *
-                 from products2
-                 where products.id = products2.id
-                   and products.title = products2.title
-                   and products.type = products2.type);
+where exists(select *
+             from products2
+             where products.id = products2.id
+               and products.title = products2.title
+               and products.type = products2.type);
 
 # Операция соединение
 
