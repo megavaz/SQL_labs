@@ -21,7 +21,7 @@ create table authors
     patronymic varchar(20)
 );
 
-create table books
+create table product
 (
     id    mediumint   not null auto_increment,
     PRIMARY KEY (id),
@@ -33,7 +33,7 @@ create table book_authors
 (
     id     mediumint not null auto_increment,
     PRIMARY KEY (id),
-    book   mediumint not null references books (id),
+    book   mediumint not null references product (id),
     author mediumint not null references authors (id)
 );
 
@@ -41,7 +41,7 @@ create table content
 (
     id      mediumint   not null auto_increment,
     PRIMARY KEY (id),
-    book    mediumint   not null references books (id),
+    book    mediumint   not null references product (id),
     product varchar(10) not null references book_catalog (edition_code)
 );
 
@@ -56,7 +56,7 @@ values ('Толстой', 'Лев', 'Николаевич'),
        ('Достоевский', 'Федор', 'Михайлович'),
        ('Пушкин', 'Александр', 'Сергеевич');
 
-insert into books (title, type)
+insert into product (title, type)
 values ('Война и мир', 'Роман'),
        ('Преступление и наказание', 'Роман'),
        ('Идиот', 'Роман'),

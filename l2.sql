@@ -19,9 +19,9 @@ order by cnt desc;
 # количества произведений, написанных этим автором;
 # это второй способ
 SELECT surname, name, patronymic, COUNT(title) cnt
-FROM books
+FROM product
          join book_authors
-              on books.id = book_authors.book
+              on product.id = book_authors.book
          join authors
               on book_authors.author = authors.id
 group by surname, name, patronymic
@@ -29,18 +29,18 @@ order by cnt desc;
 
 # Создать упорядоченный список произведений, у которых нет авторов;
 select title
-from books
-WHERE books.id
+from product
+WHERE product.id
           NOT IN (select book
                   from book_authors);
 
 
 # Создать упорядоченный список произведений, которые есть в двух и более книгах;
-select books.id, title
-from books,
+select product.id, title
+from product,
      content
-where books.id = content.book
-group by books.id, title
+where product.id = content.book
+group by product.id, title
 having count(product) >= 2
 order by title;
 
@@ -49,12 +49,12 @@ order by title;
 select title
 from book_catalog,
      content,
-     books,
+     product,
      book_authors,
      authors
 where book_catalog.edition_code = content.product
-  and content.book = books.id
-  and books.id = book_authors.book
+  and content.book = product.id
+  and product.id = book_authors.book
   and book_authors.author = authors.id
   and authors.surname = 'Чехов'
   and authors.name = 'Антон'

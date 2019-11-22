@@ -3,13 +3,13 @@
 # а состоит лишь из одного романа
 
 create view novels as
-select book_catalog.*, books.type
+select book_catalog.*, product.type
 from book_catalog,
      content,
-     books
+     product
 where book_catalog.edition_code = content.product
-  and content.book = books.id
-  and books.type = 'Роман'
+  and content.book = product.id
+  and product.type = 'Роман'
   and book_catalog.edition_code in
       (select content.product
        from content
@@ -21,13 +21,13 @@ group by edition_code;
 # по-сути это список книг (элементов book_catalog), которые содержат в себе хотя бы один роман
 
 create view novels2 as
-select book_catalog.*, books.type
+select book_catalog.*, product.type
 from book_catalog,
      content,
-     books
+     product
 where book_catalog.edition_code = content.product
-  and content.book = books.id
-  and books.type = 'Роман';
+  and content.book = product.id
+  and product.type = 'Роман';
 
 # тут вроде всё понятно, просто набор авторов, количество их книг и количество их публикаций
 
@@ -35,16 +35,16 @@ create view authors_activity as
 select authors.surname,
        authors.name,
        authors.patronymic,
-       COUNT(distinct books.id)                  number_of_books,
+       COUNT(distinct product.id)                  number_of_products,
        COUNT(distinct book_catalog.edition_code) number_of_publishments
 from book_catalog,
      content,
-     books,
+     product,
      book_authors,
      authors
 where book_catalog.edition_code = content.product
-  and content.book = books.id
-  and books.id = book_authors.book
+  and content.book = product.id
+  and product.id = book_authors.book
   and book_authors.author = authors.id
 group by authors.surname,
          authors.name,
