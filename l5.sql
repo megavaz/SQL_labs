@@ -152,7 +152,7 @@ show index from products;
 explain
 select *
 from products
--- ignore index(type_i)
+ ignore index(type_i)
 where type = 'Роман';
 
 create index type_i on products (type);
