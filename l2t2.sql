@@ -81,7 +81,7 @@ begin
     fetch c1 into edition_code, name, publisher, publishment_year, commentary, title, type1, filler;
     close c1;
     DBMS_OUTPUT.PUT_LINE(edition_code || '. ' || concat(name, ' ') || concat(isold(publishment_year, commentary), ' ')
-        || concat(publishment_year, ' ') ||publisher);
+        || concat(publishment_year, ' ') || publisher);
     DBMS_OUTPUT.PUT_LINE('Содержание:');
     counter := 1;
     for cc in c1(ed_code)
@@ -99,7 +99,7 @@ begin
                     loop
                         DBMS_OUTPUT.PUT_LINE(concat(internal_counter, ' ') || INITIALS_SHORTER(
                                 concat(concat(cc2.SURNAME, ' '), concat(concat(cc2.NAME, ' '), cc2.PATRONYMIC)))
-                                                 || ' ' || concat(title, ' ') || type1);
+                            || ' ' || concat(title, ' ') || type1);
                         internal_counter := null;
                         title := null;
                         type1 := null;
@@ -111,9 +111,83 @@ begin
         end loop;
 end;
 
+create or replace procedure bibliography(ed_code book_catalog.edition_code%TYPE) is
+    cursor c1(ident products.ID%TYPE) is select authors.surname, authors.name, authors.patronymic
+                                         from product_authors
+                                                  join authors
+                                                       on product_authors.product = ident and product_authors.author = authors.id;
+    any_rows_found   number;
+    counter          int;
+    internal_counter int;
+    edition_code     book_catalog.edition_code%TYPE;
+    name             book_catalog.name%TYPE;
+    publisher        book_catalog.publisher%TYPE;
+    publishment_year book_catalog.publishment_year%TYPE;
+    commentary       book_catalog.commentary%TYPE;
+    title            products.title%TYPE;
+    type1            products.type%TYPE;
+    ident            products.ID%TYPE;
+    pages            book_catalog.pages%TYPE;
+begin
+    select count(*)
+    into any_rows_found
+    from book_catalog,
+         content,
+         products
+    where book_catalog.edition_code = content.book
+      and content.product = products.id
+      and edition_code = ed_code;
 
+    if any_rows_found = 1 then
+        select edition_code,
+               name,
+               publisher,
+               publishment_year,
+               PAGES,
+               products.title,
+               products.type,
+               products.ID
+        into edition_code, name, publisher, publishment_year, pages, title, type1, ident
+        from book_catalog,
+             content,
+             products
+        where book_catalog.edition_code = content.book
+          and content.product = products.id
+          and edition_code = ed_code;
+
+        select count(*) --проверка есть ли у произведения авторы
+        into any_rows_found
+        from product_authors
+                 join authors
+                      on product_authors.product = ident and product_authors.author = authors.id;
+
+        if any_rows_found != 0 then
+            for cc in c1(ident)
+                loop
+                    DBMS_OUTPUT.PUT(INITIALS_SHORTER(
+                                            concat(concat(cc.SURNAME, ' '),
+                                                   concat(concat(cc.NAME, ' '), cc.PATRONYMIC))) || ', ');
+                end loop;
+        end if;
+        DBMS_OUTPUT.PUT_LINE(name || '. ' || title || ' (' || type1 || '). ' ||
+                             publisher || ', ' || publishment_year || '. ' || pages || ' c.');
+    elsif any_rows_found > 1 then
+        select name,
+               publisher,
+               publishment_year,
+               PAGES,
+               COMMENTARY
+        into name, publisher, publishment_year, pages, commentary
+        from book_catalog
+        where edition_code = ed_code;
+
+        DBMS_OUTPUT.PUT_LINE(name || '. (' || commentary || ') ' || publisher || ', ' ||
+                             publishment_year || '. ' || pages || ' c.');
+    end if;
+end;
 
 begin
     --archive;
-    show_content('edition004');
+    --show_content('edition004');
+    BIBLIOGRAPHY('edition012');
 end;
