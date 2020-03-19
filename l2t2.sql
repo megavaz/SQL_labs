@@ -13,12 +13,14 @@ create or replace procedure archive is
                                                                    where ID = id_to_del;
     cur_year       varchar(4);
     any_rows_found number;
+    ed_code        book_catalog.edition_code%TYPE;
 
 begin
     select to_char(sysdate, 'YYYY') into cur_year from dual; --получим текущий год
     for cc in c1 --пойдём по всем книгам в каталоге
         loop
             if (cur_year - cc.PUBLISHMENT_YEAR) > 50 then --если старше, то перенесём в архив
+                ed_code := cc.EDITION_CODE;
                 insert into BOOK_ARCHIVE(edition_code, name, publisher, publishment_year, pages, commentary)
                 values (cc.EDITION_CODE, cc.NAME, cc.PUBLISHER, cc.PUBLISHMENT_YEAR, cc.PAGES, cc.COMMENTARY);
                 delete from BOOK_CATALOG where EDITION_CODE = cc.EDITION_CODE;
@@ -42,9 +44,14 @@ begin
                     end loop;
             end if;
         end loop;
+exception
+    when DUP_VAL_ON_INDEX then
+        DBMS_OUTPUT.PUT_LINE('Книга с кодом издания ' || ed_code || ' уже есть в архиве');
+    when NO_DATA_FOUND then
+        DBMS_OUTPUT.PUT_LINE('Таблица пуста');
 end;
 
-
+--Процедура вывода содержания книги по её шифру
 create or replace procedure show_content(ed_code book_catalog.edition_code%TYPE) is
     cursor c1(ed_code book_catalog.edition_code%TYPE ) is select edition_code,
                                                                  name,
@@ -109,8 +116,16 @@ begin
             end if;
             counter := counter + 1;
         end loop;
+exception
+    when NO_DATA_FOUND then
+        DBMS_OUTPUT.PUT_LINE('Таблица пуста');
+        rollback;
+    when PROGRAM_ERROR then
+        DBMS_OUTPUT.PUT_LINE('Что-то пошло не так');
 end;
 
+
+--Процедура, выдающая на экран библиографическое описание книги
 create or replace procedure bibliography(ed_code book_catalog.edition_code%TYPE) is
     cursor c1(ident products.ID%TYPE) is select authors.surname, authors.name, authors.patronymic
                                          from product_authors
@@ -169,6 +184,9 @@ begin
                                                    concat(concat(cc.NAME, ' '), cc.PATRONYMIC))) || ', ');
                 end loop;
         end if;
+        if name = title then
+            title := null;
+        end if;
         DBMS_OUTPUT.PUT_LINE(name || '. ' || title || ' (' || type1 || '). ' ||
                              publisher || ', ' || publishment_year || '. ' || pages || ' c.');
     elsif any_rows_found > 1 then
@@ -184,6 +202,9 @@ begin
         DBMS_OUTPUT.PUT_LINE(name || '. (' || commentary || ') ' || publisher || ', ' ||
                              publishment_year || '. ' || pages || ' c.');
     end if;
+exception
+    when PROGRAM_ERROR then
+        DBMS_OUTPUT.PUT_LINE('Что-то пошло не так');
 end;
 
 begin
