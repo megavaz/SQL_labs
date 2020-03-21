@@ -3,8 +3,9 @@
 --книге, то данные об этом произведении удаляются в архив.
 
 create or replace procedure archive is
-    cursor c1 is select *
-                 from BOOK_CATALOG;
+    cursor c1(cur_year char) is select *
+                                from BOOK_CATALOG
+                                where (cur_year - PUBLISHMENT_YEAR) > 50;
     cursor c2(ed_code CONTENT.book%TYPE) is select *
                                             from CONTENT
                                             where BOOK = ed_code;
@@ -17,32 +18,32 @@ create or replace procedure archive is
 
 begin
     select to_char(sysdate, 'YYYY') into cur_year from dual; --получим текущий год
-    for cc in c1 --пойдём по всем книгам в каталоге
+    for cc in c1(cur_year) --пойдём по всем книгам в каталоге
         loop
-            if (cur_year - cc.PUBLISHMENT_YEAR) > 50 then --если старше, то перенесём в архив
-                ed_code := cc.EDITION_CODE;
-                insert into BOOK_ARCHIVE(edition_code, name, publisher, publishment_year, pages, commentary)
-                values (cc.EDITION_CODE, cc.NAME, cc.PUBLISHER, cc.PUBLISHMENT_YEAR, cc.PAGES, cc.COMMENTARY);
-                delete from BOOK_CATALOG where EDITION_CODE = cc.EDITION_CODE;
+            --if (cur_year - cc.PUBLISHMENT_YEAR) > 50 then --если старше, то перенесём в архив
+            ed_code := cc.EDITION_CODE;
+            insert into BOOK_ARCHIVE(edition_code, name, publisher, publishment_year, pages, commentary)
+            values (cc.EDITION_CODE, cc.NAME, cc.PUBLISHER, cc.PUBLISHMENT_YEAR, cc.PAGES, cc.COMMENTARY);
+            delete from BOOK_CATALOG where EDITION_CODE = cc.EDITION_CODE;
 
-                for prod in c2(cc.EDITION_CODE) --далее проверка что произведения нет больше ни в одной книге. Тк в одной книге может быть больше одного произведения, то обходим все
-                    loop
-                        select count(*)
-                        into any_rows_found
-                        from CONTENT
-                        where PRODUCT = prod.PRODUCT
-                          and BOOK != cc.EDITION_CODE;
-                        if any_rows_found = 0 then --проверка, что произведения больше нет ни в одной книге
-                            for k in book_for_deletion(prod.PRODUCT) --это несколько глупая часть, но я гарантированно в этом курсоре
-                                loop
-                                    --имею только одну запись, тк все ID уникальны, поэтому я хотел бы получить данные из
-                                    insert into PRODUCT_ARCHIVE --этого курсора не увеличивая количество переменных, чтоб использовать данные в этом insert,
-                                    values (k.ID, k.TITLE, k.TYPE); --поэтому тут возникает этот цикл
-                                    delete from PRODUCTS where ID = k.ID;
-                                end loop;
-                        end if;
-                    end loop;
-            end if;
+            for prod in c2(cc.EDITION_CODE) --далее проверка что произведения нет больше ни в одной книге. Тк в одной книге может быть больше одного произведения, то обходим все
+                loop
+                    select count(*)
+                    into any_rows_found
+                    from CONTENT
+                    where PRODUCT = prod.PRODUCT
+                      and BOOK != cc.EDITION_CODE;
+                    if any_rows_found = 0 then --проверка, что произведения больше нет ни в одной книге
+                        for k in book_for_deletion(prod.PRODUCT) --это несколько глупая часть, но я гарантированно в этом курсоре
+                            loop
+                                --имею только одну запись, тк все ID уникальны, поэтому я хотел бы получить данные из
+                                insert into PRODUCT_ARCHIVE --этого курсора не увеличивая количество переменных, чтоб использовать данные в этом insert,
+                                values (k.ID, k.TITLE, k.TYPE); --поэтому тут возникает этот цикл
+                                delete from PRODUCTS where ID = k.ID;
+                            end loop;
+                    end if;
+                end loop;
+            --end if;
         end loop;
 exception
     when DUP_VAL_ON_INDEX then
@@ -217,7 +218,7 @@ exception
 end;
 
 begin
-    --archive;
+    archive;
     --show_content('edition003');
-    BIBLIOGRAPHY('edition004');
+    --BIBLIOGRAPHY('edition004');
 end;
