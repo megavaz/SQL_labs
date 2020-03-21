@@ -81,12 +81,17 @@ create or replace procedure show_content(ed_code book_catalog.edition_code%TYPE)
     commentary       book_catalog.commentary%TYPE;
     title            products.title%TYPE;
     type1            products.type%TYPE;
-    filler           products.ID%TYPE ;
+    filler           products.ID%TYPE;
+
+    no_data exception;
 begin
 
     open c1(ed_code);
     fetch c1 into edition_code, name, publisher, publishment_year, commentary, title, type1, filler;
     close c1;
+    if edition_code is null then
+        raise no_data;
+    end if;
     DBMS_OUTPUT.PUT_LINE(edition_code || '. ' || concat(name, ' ') || concat(isold(publishment_year, commentary), ' ')
         || concat(publishment_year, ' ') || publisher);
     DBMS_OUTPUT.PUT_LINE('Содержание:');
@@ -117,9 +122,8 @@ begin
             counter := counter + 1;
         end loop;
 exception
-    when NO_DATA_FOUND then
-        DBMS_OUTPUT.PUT_LINE('Таблица пуста');
-        rollback;
+    when no_data then
+        DBMS_OUTPUT.PUT_LINE('Такой книги нет');
     when PROGRAM_ERROR then
         DBMS_OUTPUT.PUT_LINE('Что-то пошло не так');
 end;
@@ -132,8 +136,6 @@ create or replace procedure bibliography(ed_code book_catalog.edition_code%TYPE)
                                                   join authors
                                                        on product_authors.product = ident and product_authors.author = authors.id;
     any_rows_found   number;
-    counter          int;
-    internal_counter int;
     edition_code     book_catalog.edition_code%TYPE;
     name             book_catalog.name%TYPE;
     publisher        book_catalog.publisher%TYPE;
@@ -143,6 +145,8 @@ create or replace procedure bibliography(ed_code book_catalog.edition_code%TYPE)
     type1            products.type%TYPE;
     ident            products.ID%TYPE;
     pages            book_catalog.pages%TYPE;
+
+    no_data exception;
 begin
     select count(*)
     into any_rows_found
@@ -201,14 +205,19 @@ begin
 
         DBMS_OUTPUT.PUT_LINE(name || '. (' || commentary || ') ' || publisher || ', ' ||
                              publishment_year || '. ' || pages || ' c.');
+
+    else
+        raise no_data;
     end if;
 exception
     when PROGRAM_ERROR then
         DBMS_OUTPUT.PUT_LINE('Что-то пошло не так');
+    when no_data then
+        DBMS_OUTPUT.PUT_LINE('Такой книги нет');
 end;
 
 begin
     --archive;
-    --show_content('edition004');
-    BIBLIOGRAPHY('edition012');
+    --show_content('edition003');
+    BIBLIOGRAPHY('edition004');
 end;
