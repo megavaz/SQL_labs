@@ -1,13 +1,12 @@
 --Реализация ограничения внешнего ключа.
 
-create or replace trigger foreign_key_constraints
+create or replace trigger foreign_key_content
     before INSERT or UPDATE
     on CONTENT
     for each row
 declare
     any_rows_found number;
     for_key exception;
-    err_msg        varchar2(12);
 begin
     select count(*)
     into any_rows_found
@@ -15,33 +14,40 @@ begin
     where EDITION_CODE = :NEW.BOOK;
 
     if any_rows_found = 0 then
-        err_msg := 'Edition Code';
         raise for_key;
     end if;
 
-    select count(*)
-    into any_rows_found
-    from PRODUCTS
-    where PRODUCTS.ID = :NEW.product;
-
-    if any_rows_found = 0 then
-        err_msg := 'ID';
-        raise for_key;
-    end if;
 
 exception
     when for_key then
-        raise_application_error(-20101, 'Запись с таким ' || err_msg || ' отсутствует в оригинальной таблице');
+        raise_application_error(-20101, 'Запись с таким Edition Code отсутствует в родительской таблице');
     --DBMS_OUTPUT.PUT_LINE('Запись с таким ' || err_msg || ' отсутствует в оригинальной таблице');
 end;
 
+
+create or replace trigger foreign_key_book_catalog
+    before delete
+    on book_catalog
+    for each row
+declare
+    any_rows_found number;
+begin
+    select count(*)
+    into any_rows_found
+    from CONTENT
+    where BOOK = :OLD.EDITION_CODE;
+
+    if any_rows_found != 0 then
+        raise_application_error(-20105, 'Запись с таким Edition Code присутсвует в подчинённой таблице');
+    end if;
+end;
 --Автоматизация переноса удаляемой книги в архив.
 --код по большей части скопирован из процедуры из предыдущей лабы
 
 create
     or
     replace trigger add_to_archive
-    before
+    after
         DELETE
     on BOOK_CATALOG
     for each row
